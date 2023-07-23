@@ -28,7 +28,28 @@ async function run() {
   try {
     const usersCollection = client.db('admDB').collection('users')
     const collegesCollection = client.db('admDB').collection('colleges')
+    const admissionCollection = client.db('admDB').collection('admissions')
 
+    // user api
+      app.put('/users/:email', async (req, res) => {
+      const email = req.params.email
+      const user = req.body
+      const query = { email: email }
+      const options = { upsert: true }
+      const updateDoc = {
+        $set: user,
+      }
+      const result = await usersCollection.updateOne(query, updateDoc, options)
+      res.send(result)
+    })
+
+    // get user
+      app.get('/users/:email', async (req, res) => {
+      const email = req.params.email;
+      const query = {email: email};
+      const result = await usersCollection.findOne(query);
+      res.send(result)
+    })
 
     // get to db in all colleges data
     app.get('/colleges', async(req, res)=>{
@@ -49,6 +70,31 @@ async function run() {
         res.send(result)
     })
 
+    // admission collection
+
+      app.put('/admission/:email', async (req, res) => {
+      const email = req.params.email
+      const admissionInfo = req.body
+      const query = { email: email }
+      const options = { upsert: true }
+      const updateDoc = {
+        $set: {
+          email: email,
+          collegeId: admissionInfo.collegeId,
+          college: admissionInfo.college,
+          studentInfo: admissionInfo.studentInfo
+        }
+      }
+      const result = await usersCollection.updateOne(query, updateDoc, options)
+      res.send(result)
+    })
+    
+    app.get('/admission/:email', async (req, res) =>{
+      const email = req.email;
+      const query = {email: email};
+      const result = await admissionCollection.findOne(query);
+      res.send(result);
+    })
     // Send a ping to confirm a successful connection
     await client.db('admin').command({ ping: 1 })
     console.log(
