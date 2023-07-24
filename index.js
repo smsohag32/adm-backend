@@ -28,7 +28,8 @@ async function run() {
   try {
     const usersCollection = client.db('admDB').collection('users')
     const collegesCollection = client.db('admDB').collection('colleges')
-    const admissionCollection = client.db('admDB').collection('admissions')
+    const reviewsCollection = client.db('admDB').collection('reviews')
+    const admissionCollection = client.db('admDB').collection('admissions');
 
     // user api
       app.put('/users/:email', async (req, res) => {
@@ -85,16 +86,43 @@ async function run() {
           studentInfo: admissionInfo.studentInfo
         }
       }
-      const result = await usersCollection.updateOne(query, updateDoc, options)
+      const result = await admissionCollection.updateOne(query, updateDoc, options)
       res.send(result)
     })
-    
+
     app.get('/admission/:email', async (req, res) =>{
-      const email = req.email;
+      const email = req.params.email;
       const query = {email: email};
       const result = await admissionCollection.findOne(query);
       res.send(result);
     })
+
+    // reviews 
+
+    app.get('/reviews', async(req, res) => {
+      const result = await reviewsCollection.find().toArray();
+      res.send(result)
+    })
+
+    app.post('/reviews', async(req, res) => {
+      const reviewInfo = req.body;
+      const result = await reviewsCollection.insertOne(reviewInfo);
+      res.send(result)
+    })
+
+      // searching
+    app.get('/search/:text', async(req, res)=> {
+       // indexing 
+      const indexKey = {college_name: 1};
+      const indexOption = {college: "college_name"};
+      const indexResult = await collegesCollection.createIndex(indexKey, indexOption);
+      const searchText = req.params.text;
+      const result = await collegesCollection.find({college_name: { $regex: searchText, $options: 'i'}
+      }).toArray();
+      res.send(result)
+    })
+
+
     // Send a ping to confirm a successful connection
     await client.db('admin').command({ ping: 1 })
     console.log(
